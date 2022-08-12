@@ -84,7 +84,11 @@
     # 或
     $ python3 manage.py runserver 5000  # 指定只能本机使用127.0.0.1的5000端口访问本机
     ```
+
+首次启动，会有一个报错可以忽略，是数据库没有配置；
+
 ### Django项目的目录结构
+
 - 示例:
     ```shell
     $ django-admin startproject mysite1
@@ -96,7 +100,7 @@
         ├── settings.py
         ├── urls.py
         └── wsgi.py
-
+    
     1 directory, 5 files
     ```
     
@@ -128,15 +132,22 @@
 https://docs.djangoproject.com/en/2.2/ref/settings/
 
 1. `BASE_DIR`
-   
+
     - 用于绑定当前项目的绝对路径(动态计算出来的), 所有文件都可以依懒此路径
+
 2. `DEBUG`
-   
+
     - 用于配置Django项目的启动模式, 取值:
         1. True 表示开发环境中使用 `调试模式`(用于开发中)
+        
+           会返回运行出错时详细错误信息,修改代码后项目会自动启动
+        
         2. False 表示当前项目运行在`生产环境中`(不启用调试)
+
 3. `ALLOWED_HOSTS`
-   
+
+    **服务器的请求地址**，**默认值127.0.0.1`, `localhost**。DEBUG=fl
+
     - 设置允许访问到本项目的host请求头的值,取值:
         1. [] 空列表,表示只有host请求头为`127.0.0.1`, `localhost`能访问本项目 - DEBUG = True时生效
         2. ['*']，表示任何请求头的host都能访问到当前项目
@@ -144,33 +155,39 @@ https://docs.djangoproject.com/en/2.2/ref/settings/
         - 注意:
             - 如果要在局域网其它主机也能访问此主机,启动方式应使用如下模式:
     - `python3 manage.py runserver 0.0.0.0:5000` # 指定网络设备如果内网环境下其他主机想正常访问该站点，需加`ALLOWED_HOSTS = ['内网ip'] 
-    
+
 4. `INSTALLED_APPS`
-   
-    - 指定当前项目中安装的应用列表
+
+    - 指定当前项目中安装的应用列表(**模块**)
+
 5. `MIDDLEWARE`
-   
+
     - 用于注册中间件
+
 6. `TEMPLATES`
-   
+
     - 用于指定模板的配置信息
+
 7. `DATABASES`
-   
-    - 用于指定数据库的配置信息
+
+    - 用于指定数据库的配置信息（默认sqlite3）
+
 8. `LANGUAGE_CODE`
-   
+
     - 用于指定语言配置
     - 取值:
         - 英文 : `"en-us"`
         - 中文 : `"zh-Hans"`
+
 9. `TIME_ZONE`
-   
+
     - 用于指定当前服务器端时区
     - 取值:
         - 世界标准时间: `"UTC"`
         - 中国时区 : `"Asia/Shanghai"`
+
 10. `ROOT_URLCONF`
-    
+
     - 用于配置根级 url 配置 'mysite1.urls'
     - 如:
         - `ROOT_URLCONF = 'mysite1.urls'`
@@ -181,16 +198,20 @@ https://docs.djangoproject.com/en/2.2/ref/settings/
 ### URL定义
 
 - URL 即统一资源定位符 Uniform Resource Locator
+
 - 作用:
   
     - 用来表示互联网上某个资源的地址。
+    
 - 说明:
   
     - 互联网上的每个文件都有一个唯一的URL，它包含的信息指出文件的位置以及浏览器应该怎么处理它。
+    
 - URL的一般语法格式为：
     ```
     protocol :// hostname[:port] / path [?query][#fragment]
     ```
+    
 - 如:
     ```
     http://tts.tmooc.cn/video/showVideo?menuId=657421&version=AID201908#subject
@@ -199,23 +220,35 @@ https://docs.djangoproject.com/en/2.2/ref/settings/
 - 说明:
     - protocol（协议）
         - http 通过 HTTP 访问该资源。 格式 `HTTP://`
+        
+          使用的是明文传输；http常用语展示型WED
+        
         - https 通过安全的 HTTPS 访问该资源。 格式 `HTTPS://`
+        
+          密文传输
+        
         - file 资源是本地计算机上的文件。格式: `file:///`
+        
         - ...
-
+        
     - hostname（主机名）
         - 是指存放资源的服务器的域名系统(DNS) 主机名、域名 或 IP 地址。
         
     - port（端口号）
         - 整数，可选，省略时使用方案的默认端口；
         - 各种传输协议都有默认的端口号，如http的默认端口为80。
-    - path（路由地址）
+        
+    - **path（路由地址）**
+        
         - 由零或多个“/”符号隔开的字符串，一般用来表示主机上的一个目录或文件地址。路由地址决定了服务器端如何处理这个请求
-
-    - query(查询)
-        - 可选，用于给动态网页传递参数，可有多个参数，用“&”符号隔开，每个参数的名和值用“=”符号隔开。
-    - fragment（信息片断）
+        
+    - **query(查询)**
+        
+        - 可选，用于给**动态网页传递参数**，可有多个参数，用“&”符号隔开，每个参数的名和值用“=”符号隔开。
+        
+    - fragment（信息片断）   锚点
         - 字符串，用于指定网络资源中的片断。例如一个网页中有多个名词解释，可使用fragment直接定位到某一名词解释。
+        
     - 注: [] 代表其中的内容可省略
 
 ### Django如何处理一个URL对应的请求
@@ -593,7 +626,7 @@ Access-Control-Allow-Origin: *
 - 使用post方式接收客户端数据
 
   ```python
-request.POST['参数名']  # request.POST 绑定QueryDict
+  request.POST['参数名']  # request.POST 绑定QueryDict
   request.POST.get('参数名','')
   request.POST.getlist('参数名')
   ```
@@ -611,4 +644,3 @@ request.POST['参数名']  # request.POST 绑定QueryDict
         ...
     ]
     ```
-  
