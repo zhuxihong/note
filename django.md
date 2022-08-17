@@ -1,6 +1,6 @@
 创建项目： django-admin startproject 项目名称
 
-启动：manage.py runserver
+启动：python3 manage.py runserver
 
 Django是一个MTV模式的框架
 
@@ -267,7 +267,7 @@ views 视图处理函数文件
 
 path('user/',include('user.urls'))
 
-path('路由',include('路由.模块'))
+result=Book.objects.path('路由',include('路由.模块'))
 
 ### APP路由：
 
@@ -276,4 +276,454 @@ path('路由',include('路由.模块'))
 当页面有重复是在templates下创建与应用名同名的文件夹。即可解决
 
 ### 模型层：
+
+sudo apt-get install default-libmysqlclient-dev
+
+sudo apt-get install python3-dev
+
+sudo pip3 install mysqlclient
+
+### 数据库配置
+
+```
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.mysql',
+        'NAME': 'mysite3',   #数据库名字
+        'USER':'root',
+        'PASSWORD':'123456',
+        'HOST':'127.0.0.1',
+        'PORT':'3306'
+    }
+}
+```
+
+django shell使用：
+
+打开shell ：python3 manage.py shell
+
+### orm框架(表创建）：
+
+```
+Book.objects.create(tiele='django',price=100)  objects管理器对象
+
+```
+
+创建orm框架步骤：创建应用，并注册。在应用内models.py 内创建模型类。生成数据库迁移文件，执行生成表。
+
+增加字段：django修改表结构一定要使用模型类方式。在数据模型内增加字段，执行迁移,默认值是由django完成，没有表约束；
+
+
+
+类--》表  对象—》行 属性—》字段
+
+```
+class Book(models.Model):
+    # 类似于创建表的
+    tiele=models.CharField('书名',max_length=50,default='')
+    # 带小数点的小数，但凡表示金额的一般使用这种类型,
+    # decimal_places 小数点保留几位
+    # default  默认值
+    # max_digits 有效位置长度
+    # django会自动生成主键
+    price=models.DecimalField('定价',max_digits=7,decimal_places=2,default=0.0)
+```
+
+生成数据表：
+
+生成数据库迁移文件：
+
+python3 manage.py makemigrations        生成一个0001_initial.py
+
+执行生成表：
+
+python3 manage.py migrate
+
+模型的基本操作：
+
+增create 删delete 改Update  查filter
+
+### 数据库查询：
+
+需要引用
+
+| 方法               | 返回值                                          |
+| ------------------ | ----------------------------------------------- |
+| all                | 返回对象(select * from XX)                      |
+| values             | 获取列返回字典                                  |
+| values_list        | 返回列表                                        |
+| get                | 满足条件的唯一一条数据。多条数据会报错          |
+| filter（属性1=值） | 返回多条数据，多个属性值与关系  #惰性查询       |
+| exclude            | 除XX以外                                        |
+| filter查询谓词参数 |                                                 |
+| __contains         | 包含某值                                        |
+| __startswith       | 以什么开头                                      |
+| __endswith         | 以什么结尾                                      |
+| __gt               | 大于某值                                        |
+| __gte              | 大于等于                                        |
+| __lt               | 小于某值                                        |
+| __lte              | 小于等于                                        |
+| __in               | 指定范围内的 XX__in=[值1，值2，值3]  字符串操作 |
+| __range            | 指定范围内的 XX__range=（（30，60））范围操作   |
+
+排序：
+
+order_by(列，列)  降序加个 -
+
+### 修改数据：
+
+查-改-保存
+保存:模型类.save()
+
+批量修改：
+
+```
+books=Book.objects.filter(pub='北京大学出版社')  #找到所有北京大学出版社的书
+books.update(market_price=100)    #修改零售价为80
+
+#update 是直接发送sql语句执行
+```
+
+### 删除数据：
+
+查询到数据，直接执行delete即可，项目中，不会将记录真正删除，而是设置删除标记；
+
+### 聚合操作（分类统计）：
+
+需要导入：from django.db.models import *
+
+不带分组：
+
+Sum，Avg，Count，Max，Min
+
+语法：
+
+数据类.objects.aggregate(结果变量=聚合函数(列))
+
+```python
+result=Book.objects.aggregate(mycnt=Count('price'),myMax=Max('price'),myMin=Min('price'))
+```
+
+带分组
+
+```
+annotate
+
+pub_set=Book.objects.values('pub').annotate(mycnt=Count('price'),mysum=Sum('price'))
+#以pub分组，统计数量，总价
+```
+
+### F对象：
+
+```
+Book.objects.all().update(market_price=F('market_price')+1)
+
+获取所有的书籍给所有的书籍增加1元，比遍历执行效率高！
+使用情况：在原有数据的基础行增加值。
+
+books=Book.objects.filter(market_price__gt=F('price'))
+F内的可以表示一个值
+		用与两个字段比较
+		
+```
+
+### Q对象：
+
+使用Q包裹查询条件,可以表示 或 非 以及多个条件
+
+```python
+引入： from django.db.models import Q
+Book.objects.filter（Q（pub=‘北京大学出版社’）|Q（title=‘python’））
+#查找北京大学出版社或名称为python的书籍
+
+|或  & 与 ~非
+```
+
+### 原生操作:
+
+不推荐使用：会被sql语句注入攻击。迫不得已使用时，必须对输入进行检查
+
+模型类.objects.raw(sql语句，[拼接参数])
+
+### 表关系：
+
+clss B（）：
+
+外键： 属性=models.oneToonefield（A，on_delete=XX）  
+
+#### 删除关系
+
+orm中先删除谁都可以，通过第二个参数可以制定删除的方式。
+
+on_delete=models.CASCADE     级联删除   联动删除(删除主表时从表引用也会删除)
+
+on_delete=models.PROTECT    阻止被引用的对象的删除（主表有被引用是无法被删除）
+
+####  一对一表关系创建/查询：
+
+1创建模型类建立关系
+
+2 添加数据
+
+author1=Author.objects.create(name='王老师')  #先插入主表
+
+wife1=Wife.objects.create(name='王夫人'，author=author1)  #再插入从表
+
+wife1=Wife.objects.create(name='王夫人'，author_id=author1.id)   第二种方式
+
+3 查询数据
+
+正向查询：
+
+关联属性可以作为对象使用。直接使用.即可获取
+
+反向查询：
+
+a2=Author.objects.get(name='王老师')
+
+a2.wife.name   ##王夫人
+
+隐藏属性，主表内隐藏wifi属性。主表获取的数据可以使用影藏属性获取到从表数据
+
+#### 一对多关系建立与查询
+
+创建：
+
+属性=models.foreignkey（模型一的类，删除关系，verbose_name=‘‘出版社’）
+
+添加：
+
+反向添加：pub2.book_set.create(title='西游记')  比一对一多了一种添加方式
+
+查询：
+
+反向查询，一对多返回的是一个对象，需要使用数据库查询的属性获取；
+
+#### 多对多关系建立与查询
+
+创建：
+
+属性=models.Manytomanyfield（author）
+
+给2表中的一个表添加多对多关系会自动创建一张多对多关系表；
+
+添加：
+
+方式1：
+
+a1=Author.objects.create(name='吕老师')
+
+a2=Author.objects.create(name='王老师')
+
+book11=a1.book_set.create(title='python')  #表的关联，在book内会创建一本书
+
+a2.book_set.add(book11)      # 添加多对多的关系
+
+当存在多对多关系表时会自动记录。
+
+方式2：
+
+book=Book.objects.create(title='java')      #创建一本书，此时并无关联
+
+author3=book.authors.create(name='guoxiaonao')   # 创建一个新的作者
+
+book.authors.add(a1)  #增加一个原有作者
+
+查询：
+
+按照一对多方式查询。
+
+### 管理界面：
+
+创建超级管理员：
+
+python3 manage.py createsuperuser
+
+自定义管理数据类 admin模块下：
+
+admin.site.register(模型类)
+
+自定义模型类的展示样式：
+
+1.重写模型类__str__
+
+2.模型管理器的使用方法。
+
+```
+class BookManager(admin.ModelAdmin):
+        #设置要显示的字段
+        list_display=['id','tiele','pub','price']
+        #设置可以点击的
+        list_display_links=['id','tiele']
+        #设置可以被查询的字段
+        search_fields=['id','tiele']
+        #设置过滤器（分组功能）
+        list_filter=['pub']
+        # 设置可以在查看页面直接修改的字段
+        list_editable=['market_price']
+```
+
+3注册模型管理类
+
+### Cookies ：存储在客户端
+
+Cookies存储在客户端会话状态。数据结构是键值对结构。只存储ASC码值，按域隔离。
+
+Cookies必须由
+
+**设置**cookies：HttpResponse.set_Cookies(4个参数)
+
+1. key:cookies的名字
+2. value：cookies 的值
+3. max_age:cookies 存活时间，秒单位
+4. expires：具体过期时间
+
+```
+def set_cookies(request):
+    resp=HttpResponse('set cookies OK')
+    resp.set_cookie('uname','aid2102',600)
+    return resp
+```
+
+**删除**Cookies：HttpResponse.delete_Cookies（）
+
+**获取**Cookies：request.Cookies.get(值，缺省值)
+
+### session: 存储在服务端
+
+session会话控制，需要借助于Cookies。Cookies中存储session id 与服务器一一对应。
+
+给浏览器Cookies 发送session id 保存，用户再次访问时，携带session id 发送请求。服务器根据session id判断是否过期。未过期则免登陆。在网络上传输的不是真的用户数据，而是sessionid所以相对安全
+
+需要注册app：'django.contrib.sessions',  【默认有】
+
+中间件：'django.contrib.sessions.middleware.SessionMiddleware',【默认有】
+
+保存session值到服务器
+
+request.session['key']=Value
+
+获取session的值
+
+Value=request.session['key']
+
+Value=request.session.get['key',缺省值]
+
+删除 session的值
+
+del request.session['key']
+
+**使用session需要迁移数据库**：python3 manage.py migrate
+
+```
+# session 设置
+# 设置session过期行为和时间：（浏览器关闭即session过期，过期时间设定）
+SESSION_COOKIE_AGE = 60 * 30 # 30分钟
+SESSION_SAVE_EVERY_REQUEST = True  # 每次请求会更新sessions有效期限
+SESSION_EXPIRE_AT_BROWSER_CLOSE = True # 关闭浏览器，则COOKIE失效
+```
+
+```python
+def set_session(request:HttpRequest):
+    #设置session id并发送给客户端cookies保存,相当于字典
+    request.session['uname']='aid2102'
+    return HttpResponse('设置session 成功')
+
+def get_session(request:HttpRequest):
+    #客户端第二次访问的时候，携带session id发出请求，从cookies获取session id 并向数据库查询
+    uname=request.session.get('uname','meiyou')
+    return HttpResponse('uname is %s'%uname)
+
+def del_session(request:HttpRequest):
+    if 'uname' in request.session:
+        del request.session['uname']
+    return HttpResponse('session 删除成功')
+```
+
+删除过期：python3 manage.py clearsessions            m=hashlib.md5()
+            m.update(password_1.encode('utf-8'))
+            password=m.hexdigest()
+
+### 加密使用：
+
+ m=hashlib.md5()
+
+m.update(password_1.encode('utf-8'))
+
+password=m.hexdigest()
+
+
+
+### 缓存：
+
+使用场景：低频响应，快速响应，需要注意数据的一致性；
+
+1 数据库缓存：
+
+#### 设置缓存：
+
+```
+CACHES={
+    'default':{
+        'BACKEND':'django.core.cache.backends.db.DatabaseCache',
+        'LOCATION':'my_cache_table', 
+        'TIMEOUT':300,  #缓存保存事件
+        'OPTIONS':{ 
+            'MAX_ENTRIES':300,
+            'CULL_FREQUENCY':2
+        }
+    }
+}
+```
+
+理解：把数据存进一个比较小的表里面。提高整体的速度。各数据库介质不一样。
+
+生成缓存表：
+
+```
+python3 manage.py createcachetable 
+```
+
+整页缓存：
+
+### 络云笔记项目：
+
+```
+1. 创建项目: django-admin startproject net_note
+
+2. 启动项目：python3 manage.py runserver
+
+3. 设置中文与时区：
+
+   LANGUAGE_CODE = 'zh-Hans'
+
+   TIME_ZONE = 'Asia/Shanghai'
+   
+create database mysite7 default charset utf8
+
+4. 创建数据库：create database net_note default charset utf8
+5. django配置数据库：
+
+   DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.mysql',
+        'NAME': 'net_note',   #数据库名字
+        'USER':'root',
+        'PASSWORD':'123456',
+        'HOST':'127.0.0.1',
+        'PORT':'3306'
+    }
+}
+6. 配置sessions：python3 manage.py migrate
+7. 创建用户app  创建笔记app
+   python3 manage.py startapp user
+   python3 manage.py startapp note
+8. 构建模型类：
+9. 命令构建表：
+   生成迁移文件python3 manage.py makemigrations  
+   执行生成表 python3 manage.py migrate
+10. app内添加模板目录
+11. 在主路由设置app分发路由
+12. app分布路由urls参考主路由,设置app路由
+```
 
