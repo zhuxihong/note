@@ -1,15 +1,18 @@
+## 创建和启动项目：
+
+```
 创建项目： django-admin startproject 项目名称
 
 启动：python3 manage.py runserver
+```
 
+### 模式
+
+```
 Django是一个MTV模式的框架
-
 url.py 分配任务
-
 views.py 业务逻辑
-
 models.py 数据库操作
-
 templates.py 渲染数据
 
 MTV模式
@@ -17,22 +20,19 @@ MTV模式
 传统三层架构：
 
 ui 用户界面层
-
 bll 业务逻辑层
-
 dal 数据访问层
 
 MVC模式：
-
 controll 分配任务
-
 models  业务逻辑+数据库
+views  数据渲染和视图
 
-views  数据渲染和显示
+```
 
 
 
-### url:
+## 路由模块:
 
 urlpatterns数组保存请求路由,和响应的方法
 
@@ -53,7 +53,7 @@ path:
 re_path('(?P<变量名称>正则)')，方法，别名)   需要导包
 ```
 
-### views 模块：
+## views 模块：
 
 views需自己创建
 
@@ -119,7 +119,7 @@ requst.GET.get(name)
 
 requst.POST.get(name)
 
-### templates 模板加载响应
+## templates 模板加载响应
 
 根据字典数据动态变化的html网页
 
@@ -211,9 +211,11 @@ truncatechars:“N”  截断，超过设置长度的字符串以...显示
 
 导包：from django.urls import reverse
 
+模板中使用：{% url '别名'} 
+
 ### 静态文件
 
-不能和服务器做动态交互的文件都是静态文件。settings.py内设置2项内容：
+不能和服务器做动态交互的文件都是静态文件（css，img，js）。settings.py内设置2项内容：
 
 ```django
 /访问路径
@@ -233,31 +235,31 @@ STATICFILES_DIRS=(
 
 如果静态文件太多在同一个服务器发出的话会造成响应速度慢。
 
-### 应用APP
+## 应用APP
 
 应用在django中是一个独立的业务模块。
 
 创建应用：
 
+```
 python3 manage.py startapp music
+```
 
 注册：
 
+```
 INSTALLED_APPS 列表下添加app名称
 
 migrations 保存数据迁移的中间件
-
 init   应用子包的初始化文件
-
 admin 应用后台管理配置文件
-
 apps 应用的配置文件
-
 models 与数据库相关的映射类文件
-
 tests 应用的单元测试文件
-
 views 视图处理函数文件
+```
+
+
 
 ### 主路由分发
 
@@ -265,9 +267,11 @@ views 视图处理函数文件
 
 //http://127.0.0.1:8000/路由名称/XXXX
 
+```
 path('user/',include('user.urls'))
 
 result=Book.objects.path('路由',include('路由.模块'))
+```
 
 ### APP路由：
 
@@ -275,7 +279,7 @@ result=Book.objects.path('路由',include('路由.模块'))
 
 当页面有重复是在templates下创建与应用名同名的文件夹。即可解决
 
-### 模型层：
+## 数据模型层：
 
 sudo apt-get install default-libmysqlclient-dev
 
@@ -386,7 +390,9 @@ books.update(market_price=100)    #修改零售价为80
 
 ### 删除数据：
 
-查询到数据，直接执行delete即可，项目中，不会将记录真正删除，而是设置删除标记；
+查询到数据，直接执行对象.delete( )即可，项目中，不会将记录真正删除，而是设置删除标记；
+
+
 
 ### 聚合操作（分类统计）：
 
@@ -451,7 +457,7 @@ clss B（）：
 
 外键： 属性=models.oneToonefield（A，on_delete=XX）  
 
-#### 删除关系
+#### 主从表删除关系
 
 orm中先删除谁都可以，通过第二个参数可以制定删除的方式。
 
@@ -533,7 +539,7 @@ book.authors.add(a1)  #增加一个原有作者
 
 按照一对多方式查询。
 
-### 管理界面：
+### 后台管理管理界面：
 
 创建超级管理员：
 
@@ -564,6 +570,41 @@ class BookManager(admin.ModelAdmin):
 ```
 
 3注册模型管理类
+
+### 用户权限模块：
+
+创建普通用户create_user
+
+```python
+from django.contrib.auth.models import user
+user=User.objects.creaet_user(username='用户名'，password=‘密码’，email=‘邮箱’)
+```
+
+创建超级用户create_superuser
+
+```
+user=User.objects.creaet_superuser(username='用户名'，password=‘密码’，email=‘邮箱’)
+```
+
+删除用户仅为标记
+
+扩展字段：
+
+1，添加新的应用
+
+2.定义模型类 继承 AbstractUser
+
+3.settings.py 中设置 AUTH_USER_MODEL='应用名.类名'
+
+```
+clss 新的类名（AbstractUse）：
+	属性=数据类型（）
+	
+在生成系统自带表单前设置。
+settings.py 中设置 AUTH_USER_MODEL='应用名.类名'
+```
+
+## 用户状态保持验证
 
 ### Cookies ：存储在客户端
 
@@ -617,7 +658,7 @@ del request.session['key']
 
 ```
 # session 设置
-# 设置session过期行为和时间：（浏览器关闭即session过期，过期时间设定）
+# 设置session过期行为和时间：（翻译浏览器关闭即session过期，过期时间设定）
 SESSION_COOKIE_AGE = 60 * 30 # 30分钟
 SESSION_SAVE_EVERY_REQUEST = True  # 每次请求会更新sessions有效期限
 SESSION_EXPIRE_AT_BROWSER_CLOSE = True # 关闭浏览器，则COOKIE失效
@@ -660,14 +701,14 @@ password=m.hexdigest()
 
 1 数据库缓存：
 
-#### 设置缓存：
+#### 设置MYSQL缓存：
 
 ```
 CACHES={
     'default':{
         'BACKEND':'django.core.cache.backends.db.DatabaseCache',
         'LOCATION':'my_cache_table', 
-        'TIMEOUT':300,  #缓存保存事件
+        'TIMEOUT':300,  #缓存保存时间
         'OPTIONS':{ 
             'MAX_ENTRIES':300,
             'CULL_FREQUENCY':2
@@ -684,12 +725,331 @@ CACHES={
 python3 manage.py createcachetable 
 ```
 
-整页缓存：
-
-### 络云笔记项目：
+#### redis设置：
 
 ```
-1. 创建项目: django-admin startproject net_note
+需要安装模块：pip3 install django-redis
+```
+
+```
+CACHES = {
+    "default": {
+        "BACKEND": "django_redis.cache.RedisCache",
+         # 安装redis的主机的 IP 和 端口,以及使用的仓库
+        "LOCATION": "redis://127.0.0.1:6379/0",
+        "OPTIONS": {
+            "CLIENT_CLASS": "django_redis.client.DefaultClient",
+            "CONNECTION_POOL_KWARGS": {
+            "max_connections": 1000,
+            "encoding": 'utf-8'
+            },
+        "PASSWORD": "123456" # redis密码
+        }
+    }
+}
+```
+
+
+
+#### 服务器缓存使用：
+
+```
+from django.views.decorators.cache import cache_page
+```
+
+```
+整页缓存：
+@cache_page(60)    #缓存60秒 程序的结果。缓存有效期内会执行缓存结果。
+def test_cache(request:HttpRequest):
+    t1=time.time()
+    time.sleep(5)
+    return HttpResponse('t1 is %s'%t1)
+
+路由中使用：
+path('test_cache',ache_page(60)(views.test_cache))
+
+总结：
+整页缓存灵活性差，不能缓存部分数据。很难删除缓存。
+```
+
+```
+部分缓存导包 ：1. from django.core.cache import caches   多个配置项
+			 2. from django.core.cache import cache	   单个配置项
+			 -  局部缓存,使用缓存api使用更灵活
+```
+
+```
+cache.set（‘key：字符串’，‘value：python对象’，缓存时间）
+cache.set('uname','aid2102',600)  #uname键，缓存值是aid2102，存600秒
+
+cache.add()  #键存在时则设置失效
+cache.get_or_set() #获取成功则不设置，不成功则设置，
+cache.get('uname')
+cache.delete('uname')
+
+cache.set_many({多个键值})    设置多个键值
+cache.get_many([多个键])
+cache.delete_many([多个键])
+cache.add()  #
+```
+
+#### 浏览器缓存：
+
+```
+强缓存：
+Expires 是响应信息
+Cache-Control:  时间段
+协商缓存：
+强缓存失效以后，会使用到协商缓存
+```
+
+### 中间件：
+
+一个中间件包含的：
+
+1. 进入路由前
+2. 响应浏览器前
+3. 调用视图函数前
+4. VIEWS报错时
+5. 返回模板 前
+
+模块：from django.utils.deprecation import MiddlewareMixin
+
+重写：新建一个py文件，引入模块，创建类继承重MiddlewareMixin 重写process_方法
+
+process_ 和视图函数一样包含 request 对象 
+
+### CSRF跨站伪造攻击：
+
+通过其他网站post请求，发起攻击。利用浏览器带有的cookie伪造身份。向服务器发送危害请求；
+
+django避免跨站伪造攻击：{% csrf_ token %}
+
+某个模板不需要保护的函数 @csrf_exempt  装饰器
+
+## 分页：
+
+paginator=paginator（需要分类数据的对象列表，每页数据个数）  分页数据整体管理
+
+paginator属性：
+
+count 分类数据的总数
+
+num_pages：分页页面总数
+
+page_range:用户记录当前的码数
+
+per_page:每页数据的个数
+
+paginator方法：
+
+paginator.page(获取第几页的数据)
+
+
+
+## 文件下载：
+
+django可以直接在视图函数生成csv文件 并响应给浏览器
+
+```
+1.设置响应对象（更改响应头）
+2.通过响应头指定以附件方式处理，以及文件名称
+3.准备数据
+4.构建写入器，数据写入到响应对象中
+5.使用创建的写入器写入数据
+6.返回响应
+
+理解：把文件内容写进响应对象中。设置响应头，告诉浏览器这是个附件和文件类型，文件名。
+```
+
+## 文件上传：
+
+python流程：
+
+1.必须是form表单，带有enctype="multipart/form-data"
+
+2.input 属性type="file"
+
+3.flies=request.FILES['input name']
+
+4.file.name 获取文件名
+
+5.file.file 文件的字节流数据
+
+6.配置文件，并创建文件夹
+
+MEDIA_URL='/media'
+
+MEDIA_ROOT=os.path.join(BASE_DIR,'media‘’)
+
+模块：
+
+```python
+#导入django的sttings而不是项目的
+from django.conf import settings   
+
+from django.views.decorators.csrf import csrf_exempt
+
+```
+
+django提供的方法：
+
+借助orm,文件路径保存在数据库。
+
+创建表属性：
+
+```python
+myfiles=models.filefield(upload_to='myfiles')  存储路径
+
+在业务逻辑中，插入filed对象。就可以完成上传
+
+```
+
+## 设置为静态直接访问：
+
+```
+在主路由模块添加设置
+from django.conf import settings 
+urlpattrns += static（settings.MEDIA_URL,document_root=stings.MEDIA_ROOT）
+```
+
+------
+
+
+
+## 邮件发送：
+
+```
+from django.core import mail
+```
+
+```
+固定设置：
+EMAIL_BACKEND='django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = "smtp.qq.com" 
+EMAIL_PORT = 25 
+EMAIL_HOST_USER = "435498423@qq.com"
+EMAIL_HOST_PASSWORD = "kkcmxfuhnotvbhii"
+------------------
+EMAIL_USE_TLS = True    #是否明文
+EMAIL_FROM = "l791034063@163.com"
+```
+
+```
+mail.send_mail(标题，邮件内容，发送者，接收人[列表])
+```
+
+------
+
+
+
+## 项目部署：
+
+1.在安装机器上配置相同版本环境
+
+2 django项目迁移  sudo scp 当前项目源代码
+
+3 用uwsgi代替 runserver 方法启动服务器
+
+4 配置nginx反向代理服务器
+
+5用nginx配置静态文件路径，解决静态路径问题
+
+```ini
+uwsgi配置：
+添加文件: 项目同名文件夹/uwsgi.ini
+
+[uwsgi]
+模式：
+#套接字模式
+socket = 127.0.0.1:8000   
+#http模式
+http=127.0.0.1:8000
+#项目目录
+chdir = /home/zhuxihong/mysie8    
+#wsgi.py所在位置
+wsgi-file = mysie8/wsgi.py   
+#进程数
+processes = 4      
+#线程数
+threads = 2		
+#服务记录文件（服务启动后主进程的ID）
+pidfile=uwsgi.pid  
+#服务的日志文件
+daemonize=uwsgi.log  
+#开启主进程管理模式
+master=true   
+
+DEBUG关掉
+在项目文件下：sudo uwsgi --ini uwsgi.ini
+停止 uwsgi ：sudo uwsgi --stop uwsgi.pid
+查看进程：ps aux|grep 'uwsgi'
+stop失败：
+ps -ef |grep ‘uwsgi’ | grep -v grep | awk '{print $2}'|xargs sudo kill -9
+```
+
+```nginx
+nginx反向代理配置：
+
+作用：均衡负载
+修改配置文件 /etc/nginx/
+nginx.conf  主服务配置
+access_log    访问日志41行
+error_log     错误日志42
+virtual HOst configs   管理站点 61，62行
+
+
+2.
+sudo vi /etc/nginx/sites-enabled/default
+location / {
+uwsgi_pass 127.0.0.1:8000;   #重定向到127.0.0。1的8000端口
+include /etc/nginx/uwsgi_params; #将所有参数转到uwsgi下
+}
+	
+3 修改后重启
+sudo /etc/init.d/nginx start | stop
+
+4.修改uwsgi配置模式为socket
+nginx配置后默认使用80端口，后续无需再使用端口号
+
+nginx读取不到静态文件需要配置
+1，创建新路径-主要存放django所有静态文件
+2，在django中添加新的配置：
+STATIC_ROOT ='/home/用户名/项目名称_static/static'
+3.迁移所有静态文件：
+pyhon3 manage.py collectstatic
+4.修改配置nginx,增加
+location /static {
+    root /home/zhuxihong/tarena/mysie8_static;
+}
+ps 出现403问题，这个就是由于nginx中通常会默认user为wwwuser wwww，而你在实际后台登录时，通常是作为管理员root(部分云的管理员用户不一样，比如腾讯云就是ubuntu)用户登录，而产生了启动用户和nginx工作用户不一致，导致权限问题。
+解决方法：将nginx.config的user改为和启动用户一致
+```
+
+## 定制404/500页面
+
+模板页内文件名404.html，新增页面需要重启uwsgi。
+
+## 邮件告警：
+
+ADMINS=[(错误接收方)]
+
+过滤敏感信息：
+
+```
+from django.views.decorators.debug impor sensitive_variables,sensitive_post_parameters
+增加装饰器
+@sensitive_variables(需要过滤的变量)
+post过滤:
+@sensitive_post_parameters(需要过滤的变量)
+```
+
+
+
+## 网络云笔记项目：
+
+```
+models1. 创建项目: django-admin startproject net_note
 
 2. 启动项目：python3 manage.py runserver
 
@@ -699,7 +1059,6 @@ python3 manage.py createcachetable
 
    TIME_ZONE = 'Asia/Shanghai'
    
-create database mysite7 default charset utf8
 
 4. 创建数据库：create database net_note default charset utf8
 5. django配置数据库：
