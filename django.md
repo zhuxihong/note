@@ -235,11 +235,68 @@ STATICFILES_DIRS=(
 
 如果静态文件太多在同一个服务器发出的话会造成响应速度慢。
 
+### 配置跨域资源共享：
+
+```
+注册：corsheaders
+```
+
+```
+中间件：corsheaders.middleware.CorsMiddleware [最前面或第三个]
+```
+
+```
+白名单：CORS_ORIGIN_ALLOW_ALL=True   True表示白名单不启用
+```
+
+```
+白名单设置：CORS_ORIGIN_WHITELIST=[
+	"https://example.com"，
+    "https://sub.example.com"，
+    "http//localhost:8080",
+    "http://127.0.0.1:9000",
+]
+```
+
+```
+#允许外部访问方法
+CORS_ALLOW_METHODS = [
+    'DELETE',
+    'GET',
+    'OPTIONS',
+    'PATCH',
+    'POST',
+    'PUT',
+]
+```
+
+```
+# 允许外部的访问头：
+CORS_ALLOW_HEADERS = [
+    'accept',
+    'accept-encoding',
+    'authorization',
+    'content-type',
+    'dnt',
+    'origin',
+    'user-agent',
+    'x-csrftoken',
+    'x-requested-with',
+]
+
+7, CORS_PREFLIGHT_MAX_AGE  默认 86400s
+8, CORS_EXPOSE_HEADERS  []
+#是否接受cookis
+9, CORS_ALLOW_CREDENTIALS  布尔值， 默认False
+```
+
+
+
 ## 应用APP
 
 应用在django中是一个独立的业务模块。
 
-创建应用：
+建应用：
 
 ```
 python3 manage.py startapp music
@@ -755,6 +812,8 @@ CACHES = {
 
 ```
 from django.views.decorators.cache import cache_page
+
+from django_redis import get_redis_connection
 ```
 
 ```
@@ -878,7 +937,7 @@ python流程：
 
 6.配置文件，并创建文件夹
 
-MEDIA_URL='/media'
+MEDIA_URL='/media/'
 
 MEDIA_ROOT=os.path.join(BASE_DIR,'media‘’)
 
@@ -889,7 +948,7 @@ MEDIA_ROOT=os.path.join(BASE_DIR,'media‘’)
 from django.conf import settings   
 
 from django.views.decorators.csrf import csrf_exempt
-
+urlpatterns += static(settings.MEDIA_URL,document_root=settings.MEDIA_ROOT)
 ```
 
 django提供的方法：
@@ -909,8 +968,9 @@ myfiles=models.filefield(upload_to='myfiles')  存储路径
 
 ```
 在主路由模块添加设置
-from django.conf import settings 
-urlpattrns += static（settings.MEDIA_URL,document_root=stings.MEDIA_ROOT）
+from django.conf import settings
+from django.conf.urls.static import static
+urlpatterns += static(settings.MEDIA_URL,document_root=settings.MEDIA_ROOT)
 ```
 
 ------
@@ -1016,7 +1076,7 @@ nginx读取不到静态文件需要配置
 1，创建新路径-主要存放django所有静态文件
 2，在django中添加新的配置：
 STATIC_ROOT ='/home/用户名/项目名称_static/static'
-3.迁移所有静态文件：
+3.迁移所有静态文件：urlpattrns
 pyhon3 manage.py collectstatic
 4.修改配置nginx,增加
 location /static {
@@ -1084,5 +1144,199 @@ models1. 创建项目: django-admin startproject net_note
 10. app内添加模板目录
 11. 在主路由设置app分发路由
 12. app分布路由urls参考主路由,设置app路由
+```
+
+## 博客项目：
+
+```
+1. 新建项目
+2. 配置数据库
+3. 配置静态文件目录
+4. 配置跨域访问
+5. 前端文件是用flask组织起来的，flask也是后端框架。为了更方便调试
+‘‘‘
+flask_client.py类似与manage.py，通过这个文件启动项目启动
+启动命令：python3  flask_client.py run
+’’’
+6. 启动flask
+7. 创建user应用，添加模型类并生成表
+8. 前端注册页面ajax编写
+9. 后端url配置
+10.生成token返回到客户端存储,秘钥存放在配置文件内，使用JWT模块生成token
+   需要用到，秘钥，时间，公有声明，私有声明。调用jwt.encode（载荷，秘钥）
+11.前端本地存储window.localStorage.setItem('dnblog_token',res.data.token)
+12.登录功能实现，如果任何一种请求方式都与功能实现无匹配，则不围绕他做
+13.在发送ajax请求前，将token增加到请求头中。
+   前端：request.setRequestHeader("Authorization", token);
+14.前端收到响应之后拿用户信息加上标签动态生成页面，以显示用户信息
+15.获取指定任意个字段，？字段名=1&字段名=1 然后判断字段名是否存在，存在则返回
+	按需获取：
+	hasattr（对象，属性）判断对象user中是否存在属性
+	gettattr（对象，属性）获取对象中名为属性名的值
+15. 修改用户信息,一定是从本地存储读取已登录用户信息。
+16. 后端制作登录校验装饰器
+	获取请求头：token=request.META.get('HTTP_AUTHORIZATION')
+	python 可以动态为对象添加属性。登录验证后。把用户信息从数据库查询后添加到requst内，	在调用被装饰的函数。
+17. django文件上传配置,配置静态访问文件。
+18. 修改用户信息，需要验证用户登录状态，由于用户验证模块是函数装饰器，非类方法装饰器。需使	   用django提供的函数装饰器转换成方法装饰器。@method_decorator(函数装饰器)
+    导包：from django.utils.decorators import method_decorator
+19. 短信验证。容联云
+	https://api.netease.im/sms/sendtemplate.action
+20，构建容联云请求，
+	# 构造请求的url
+	# 声明时间戳
+	# 计算sig参数：
+	# 构造请求包的包头
+	# 构造请求包的包体
+	# 发送请求
+	# 运行（将步骤串联）
+21. 编写前端发送请求
+22. 后端路由设置，防止冲突与用户信息，应写在最上面。在用户信息页面禁止用户注册同路由名的用     户名称。
+23. 可能发生同步等待问题，引入异步框架-Celery（生产者消费者模式框架）
+24. 安装sudo pip3 install -U Celery
+25  使用Celery实现异步发送短信
+```
+
+##  Celery：
+
+名词解释：
+
+broker - 消息传输的中间件，生产者一旦有消息发送，将发至broker；【RQ，redis】
+
+backend -   用于存储消息/任务结果，如果需要跟踪和查询任务状态，则需添加要配置相关
+
+worker - 工作者 - 消费/执行broker中消息/任务的进程
+
+安装：
+
+```
+sudo pip3 install -U Celery
+```
+
+创建工作者：
+
+```python
+#创建 tasks.py 文件
+
+from celery import Celery
+#初始化celery, 指定broker
+app = Celery('guoxiaonao', broker='redis://:password@127.0.0.1:6379/1')
+
+#若redis无密码，password可省略
+#app = Celery('guoxiaonao', broker='redis://:@127.0.0.1:6379/1')
+
+# 创建任务函数
+@app.task
+def task_test():
+    print("task is running....") 
+```
+
+```
+执行：celery -A tasks worker --loglevel=info
+```
+
+创建生产者推送任务：
+
+```
+在tasks.py文件的同级目录进入 ipython3 执行 如下代码
+from tasks import task_test
+task_test.delay()
+```
+
+```
+task_test.delay()  #推送任务给消费者，直接执行函数会当成一个普通函数处理。
+```
+
+存储执行结果：
+
+```python
+#创建 tasks_result.py
+from celery import Celery
+app = Celery('demo',
+             broker='redis://@127.0.0.1:6379/1',
+             backend='redis://@127.0.0.1:6379/2',
+             )
+
+# 创建任务函数
+@app.task
+def task_test(a, b):
+    print("task is running")
+    return a + b
+```
+
+### DJANGO+CELERY
+
+1，创建项目+应用
+
+```python
+#常规命令
+django-admin startproject test_celery
+python manage.py startapp user
+```
+
+2，创建celery.py
+
+在settings.py同级目录下 创建 celery.py文件
+
+文件内容如下：
+
+```python
+from celery import Celery
+from django.conf import settings
+import os
+
+# 为celery设置环境变量
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'test_celery.settings')
+
+# 创建应用
+app = Celery("test_celery")
+# 配置应用
+app.conf.update(
+    # 配置broker
+    BROKER_URL='redis://:@127.0.0.1:6379/1',
+)
+# 设置app自动加载任务
+app.autodiscover_tasks(settings.INSTALLED_APPS)
+```
+
+3,  在应用模块【user目录下】创建tasks.py文件
+
+文件内容如下：
+
+```python
+from test_celery.celery import app
+import time
+
+@app.task
+def task_test():
+    print("task begin....")
+    time.sleep(10)
+    print("task over....")
+```
+
+4,  应用视图编写；内容如下：
+
+```python
+from django.http import HttpResponse
+from .tasks import task_test
+import datetime
+
+def test_celery(request):
+    task_test.delay()
+	now = datetime.datetime.now()
+    html = "return at %s"%(now.strftime('%H:%M:%S'))
+    return HttpResponse(html)
+```
+
+5,  分布式路由下添加 test_celery函数对应路由，此过程略
+
+6,  启动django   python3 manage.py runserver
+
+7,  创建 celery worker
+
+​	在项目路径下，即test_celery 下  执行如下
+
+```
+celery -A test_celery worker -l info
 ```
 
