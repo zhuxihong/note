@@ -444,3 +444,12 @@ sentinel auth-pass 主名称 密码     # 有密码的情况加入
 sentinel down-after-milliseconds 主名称 时长   # 主失去链接多久判定为死亡
 ```
 
+```
+[
+'topic_cache_self_/v1/topics/zhuxihong', 
+'topic_cache_self_/v1/topics/zhuxihong?category=tec', 'topic_cache_self_/v1/topics/zhuxihong?category=no-tec', 'topic_cache_/v1/topics/zhuxihong', 
+'topic_cache_/v1/topics/zhuxihong?category=tec', 'topic_cache_/v1/topics/zhuxihong?category=no-tec'
+]
+
+```
+

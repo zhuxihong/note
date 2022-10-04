@@ -198,4 +198,16 @@ $.ajax({
 服务端返回：return HttpResponse(func+'('+ 返回的数据 +')')
 ```
 
-1.58
+前端发送请求模板：
+
+```
+		$.ajax({
+			url:'http://127.0.0.1:8000/v1/users',
+			type:'post',
+			data:JSON.stringify(post_data),
+			contentType:'application/json'
+		}
+		)
+	}
+```
+
