@@ -25,7 +25,7 @@ dal 数据访问层
 
 MVC模式：
 controll 分配任务
-models  业务逻辑+数据库
+models  数据库
 views  数据渲染和视图
 
 ```
