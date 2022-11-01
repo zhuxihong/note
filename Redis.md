@@ -445,11 +445,13 @@ sentinel down-after-milliseconds 主名称 时长   # 主失去链接多久判�
 ```
 
 ```
-[
-'topic_cache_self_/v1/topics/zhuxihong', 
-'topic_cache_self_/v1/topics/zhuxihong?category=tec', 'topic_cache_self_/v1/topics/zhuxihong?category=no-tec', 'topic_cache_/v1/topics/zhuxihong', 
-'topic_cache_/v1/topics/zhuxihong?category=tec', 'topic_cache_/v1/topics/zhuxihong?category=no-tec'
-]
+
+
+```
+
+```
+
+
 
 ```
 
