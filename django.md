@@ -402,7 +402,7 @@ python3 manage.py migrate
 
 模型的基本操作：
 
-增create 删delete 改Update  查filter
+**增create 删delete 改Update  查filter**
 
 ### 数据库查询：
 
