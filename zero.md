@@ -52,6 +52,7 @@ h.digest()  #获得认证码
  ‘iss’：xx  token签发者
  ‘iat’：xx  token创建时间的时间戳
  ‘aud‘：xx  token签发面向群体
+ ‘username’：xx
 }
 ```
 
@@ -86,87 +87,97 @@ token=头部信息+公有声明+签名
 秘钥的交换传递有专有的方法。秘钥由双方沟通！
 ```
 
-```
-token示例代码：
+```python
+token原理示例代码：
 ----------------------------------------------------------------------------
 # 用到的模块
-import base64
-import json
-import hmac
 import time
+import hmac
+import json
+import base64
 import copy
-
-class Jwt():
-    def __init__(self) -> None:
+class MyJWT:
+    def __init__(self):
         pass
-    @staticmethod
-    def encode(payload,key,exp=300):
-        # HEADER
-        header={'alg':'HS256','typ':'JWT'}
-        # 字典=》json串
-        header_json=json.dumps(header,separators=(',',':'),sort_keys=True)  #separators去除空格 sort_keys保证顺序（因为字典无需，可能发生顺序不一致）
-        #base64编码
-        header_bs=Jwt.b64encode(header_json.encode())
-        # PAYLOAD
-        payload_data=copy.deepcopy(payload)
-        # 在原来字典上增加公有声明
-        payload_data['exp']=time.time()+int(exp)
-        # 字典=》json
-        payload_json=json.dumps(payload_data,separators=(',',':'),sort_keys=True)
-        # base64编码
-        payload_bs=Jwt.b64encode(payload_json.encode())
-        # 签名(秘钥+)
-        hm=hmac.new(key.encode(),header_bs+b'.'+payload_bs,digestmod='SHA256')
-        hm.hexdigest()  #16进制的字符串，用于输出
-        # 消息验证码，字节串
-        digest=hm.digest()    
-        hm_bs=Jwt.b64encode(digest)
-        # 将三部分合在一起，生成token并返回
-        return header_bs+b'.'+payload_bs+b'.'+hm_bs
+    # 生成token
+    def make_token(self,payload,key,mexpire=600):
+        # 第一部分header
+        header = {'alg': 'HS256', 'typ': 'JWT'}
+        # separators,替换分隔符,因为dumps后会在分隔符后面加空格，
+        # 为节省带宽替换成不带空格的
+        header=json.dumps(header,separators=(',',':'))
+        header_bs=self.base64_encode(header)
 
-    @staticmethod
-    def b64encode(j_s):
-        # 除去等号
-        return base64.urlsafe_b64encode(j_s).replace(b'=',b'')
+        # 第二部分 payload（公有声明＋私有声明），
+        # payload传参过来对数据进行了操作，为不影响原有数据。对数据进行copy.deepcopy深拷贝后使用
+        payload_data = copy.deepcopy(payload)
+        payload_data['exp']=int(time.time())+int(mexpire)
+        payload=json.dumps(payload_data,separators=(',',':'))
+        payload_bs=self.base64_encode(payload)
+
+        #第三部分 对前两部分的和进行hmac加密
+        hm=hmac.new(key,header_bs+b'.'+payload_bs,digestmod='SHA256').hexdigest()
+        hm_bs=self.base64_encode(hm)
+        token=header_bs+b'.'+payload_bs+b'.'+hm_bs
+        return token
     
-    @staticmethod
-    def b64decode(b_s):
-        # 补上等号，因为编码的时候把后面的等号去掉了，所以需要补回
-        rem=len(b_s)%4    #能不4整除的数，表示后面没有=号，如果他有余数则表示有=
-        if rem>0:
-            b_s+=b"="*(4-rem)  #4减余数则是等号的数量。让他补回
-        return base64.urlsafe_b64decode(b_s)
-
-    @staticmethod
-    def decode(token,key):
-        # 将token拆分成3部分
-        header_bs,payload_bs,sign=token.split(b'.')
-        # 重新计算消息消息认证码
-        hm=hmac.new(key.encode(),header_bs+b'.'+payload_bs,digestmod='SHA256')
-        digest=hm.digest()
-        # 再次计算的结果，称为计算结果或签名
-        hm_bs=Jwt.b64encode(digest)
-        # 验签不通过，抛出异常
-        if hm_bs !=sign :
+    def base64_encode(self,data):
+        # 进行base64编码，编码后方的‘=’删除
+        return base64.urlsafe_b64encode(data.encode()).replace(b'=',b'')
+   
+    def base64_decode(self,data):
+        # 进行base64解码
+    	# 对删减后‘=’号补齐，因为base64编码后的字符串都是4的倍数，
+    	# 余4后可得出最后一段的数量，用最后一段的数量减去4就是删除了多少个‘=’
+        # XXX= => XXX 取余等于3 3-余数=1 删除了一个‘=’
+        data_len=len(data)%4
+        if data_len > 0:
+            data+=b'='*(4-data_len)
+        return base64.urlsafe_b64decode(data)
+    
+    # 解析token
+    def check_token(self,token):
+        # 第一步：重新拆分三个部分，再次计算值再次校验是否被修改
+        header,payload,msg=token.split(b'.')
+        hm=hmac.new(b'1234564',header+b'.'+payload,digestmod='SHA256')
+        hm_str=hm.hexdigest()
+        hm_bs=self.base64_encode(hm_str)
+        # 第二部：校验msg
+        if msg != hm_bs:
+            print('不匹配')
             raise
-        # 想获取payload,但是需要base64解码
-        payload_js=Jwt.b64decode(payload_bs)
-        # json=》字典对象
-        payload=json.loads(payload_js)
-        # 有了字典对象就可以获取公有声明和私有声明的值了。
-        exp=payload['exp']
-        now=time.time()
-        if now>exp:
+        # 校验声明，还原base64声明部分的‘=’
+        payload_b=self.base64_decode(payload)
+        payload=json.loads(payload_b)
+        if payload['exp'] < time.time():
             raise
-        return payload
+        return payload['user']
 
+if __name__ == '__main__':
+    jwt=MyJWT()
+    token=jwt.make_token({'user':'zhuxihong'},b'1234564')
+    user=jwt.check_token(token)
+    print(user)
+    
 
-if __name__ =='__main__':
-    token=Jwt.encode({'username':'aid2102'},'123456')
-    print(token)
-    payload=Jwt.decode(token,'1234567')
-    print(payload)
 ```
+
+### 【推荐】JWT模块使用：
+
+```
+token官方示例代码：
+
+payload={'exp':int(time.time())+2,
+		 'username':'zhuxihong'}
+生成：	 
+token_2=jwt.encode(payload,'1234564')
+校验：
+print(jwt.decode(token_2,'1234564',algorithms='HS256'))
+```
+
+
+
+
 
 ### 跨域资源共享
 

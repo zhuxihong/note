@@ -402,7 +402,7 @@ python3 manage.py migrate
 
 模型的基本操作：
 
-增create 删delete 改Update  查filter
+**增create 删delete 改Update  查filter**
 
 ### 数据库查询：
 
@@ -434,6 +434,15 @@ order_by(列，列)  降序加个 -
 ### 修改数据：
 
 查-改-保存
+
+修改表数据：
+
+```
+user=User.objects.get(username=username)
+user.age=17
+user.save()
+```
+
 保存:模型类.save()
 
 批量修改：
@@ -803,7 +812,54 @@ CACHES = {
         "PASSWORD": "123456" # redis密码
         }
     }
+     "配置名称"：{}
 }
+```
+
+**redis使用**
+
+只能使用set/get。django会自动配置数据类型
+
+```
+from django.core.cache import cache
+from django.core.cache import caches
+
+# 设置缓存数据， version用来控制版本，不同的版本之间的数据不互通
+cache.set(key, value, timeout=default_timeout, version)
+# 获取缓存的数据，如果设置了default，则在没有获取到改key的值时，使用default
+cache.get(key, default, version)
+# 与set相似，如果key已经存在的话，将不会添加
+cache.add(key, value, timeout=default_timeout, version)
+# 获取key的值，如果不存在则设置值为default
+cache.get_or_set(key, default, timeout=default_timeout, version)
+# 其中key为列表，返回的一个字典
+cache.get_many(key, version)
+# 设置多个缓存数据
+cache.set_many(dict, timeout)
+# 删除key键的值
+cache.delete(key, version)
+# key为一个列表，用来删除多个键的数据
+cache.delete_many(key, version)
+# 删除所有的缓存的数据
+cache.clear()
+# 为key设置新的到期时间，设置timeout秒后过期
+cache.touch(key, timeout = DEFAULT_TIMEOUT, version)
+# 对key的值进行增加
+cache.incr(key, delta=1, version)
+# 对key的值进行减少
+cache.decr(key, delta=1, version)
+# 关闭缓存连接
+cache.close()
+
+```
+
+如果需要更复杂的可以使用（接近原生的操作）：
+
+```
+from django_redis import get_redis_connection
+redis_conn = get_redis_connection("配置名称")
+redis_conn.sadd(key,member)
+redis_conn.hset(key,field,value)
 ```
 
 
@@ -812,7 +868,6 @@ CACHES = {
 
 ```
 from django.views.decorators.cache import cache_page
-
 from django_redis import get_redis_connection
 ```
 
@@ -1231,6 +1286,8 @@ flask_client.py类似与manage.py，通过这个文件启动项目启动
 
 ##  Celery：
 
+![](C:\Users\43549\AppData\Roaming\Typora\typora-user-images\image-20221114224046316.png)
+
 名词解释：
 
 broker - 消息传输的中间件，生产者一旦有消息发送，将发至broker；【RQ，redis】
@@ -1245,17 +1302,18 @@ worker - 工作者 - 消费/执行broker中消息/任务的进程
 sudo pip3 install -U Celery
 ```
 
-创建工作者：
+创建生产者：
 
 ```python
 #创建 tasks.py 文件
 
 from celery import Celery
 #初始化celery, 指定broker
-app = Celery('guoxiaonao', broker='redis://:password@127.0.0.1:6379/1')
+app = Celery('guoxiaonao', broker='redis://:@127.0.0.1:6379/1')
+格式：Celery('初始化名字', broker='消息中间件')
 
 #若redis无密码，password可省略
-#app = Celery('guoxiaonao', broker='redis://:@127.0.0.1:6379/1')
+#app = Celery('guoxiaonao', broker='redis:password//:@127.0.0.1:6379/1')
 
 # 创建任务函数
 @app.task
@@ -1263,11 +1321,7 @@ def task_test():
     print("task is running....") 
 ```
 
-```
-执行：celery -A tasks worker --loglevel=info
-```
-
-创建生产者推送任务：
+推送任务到消息中间件：
 
 ```
 在tasks.py文件的同级目录进入 ipython3 执行 如下代码
@@ -1276,17 +1330,24 @@ task_test.delay()
 ```
 
 ```
-task_test.delay()  #推送任务给消费者，直接执行函数会当成一个普通函数处理。
+task_test.delay(参数)  #推送任务给消息中间件。
 ```
 
-存储执行结果：
+消费者执行任务：
+
+```
+命令行执行：celery -A tasks worker --loglevel=info  开启后消费者进程会等待消息中间件任务。有任务立即获取执行。
+```
+
+存储执行结果（传参+存储结果）：
 
 ```python
 #创建 tasks_result.py
 from celery import Celery
 app = Celery('demo',
              broker='redis://@127.0.0.1:6379/1',
-             backend='redis://@127.0.0.1:6379/2',
+             # 带返回值的函数存储结果的容器
+             backend='redis://@127.0.0.1:6379/2', 
              )
 
 # 创建任务函数
@@ -1294,13 +1355,35 @@ app = Celery('demo',
 def task_test(a, b):
     print("task is running")
     return a + b
+
+# 启动消费者等待任务
+终端：celery -A tasks worker --loglevel=info
+
+# ipython3推送任务到消息中间件：
+from tasks import task_test
+task_test.delay(参数)
+
+
 ```
 
 ### DJANGO+CELERY
 
+流程：
+
+1.在settings.py同级目录下 创建 celery.py配置文件
+
+2.在应用下创建异步任务文件。
+
+3.在视图内推送异步任务到消息中间件
+
+4.启动消费者进程获取任务。
+
+示例：
+
 1，创建项目+应用
 
 ```python
+安装 CELERY
 #常规命令
 django-admin startproject test_celery
 python manage.py startapp user
@@ -1308,7 +1391,7 @@ python manage.py startapp user
 
 2，创建celery.py
 
-在settings.py同级目录下 创建 celery.py文件
+在settings.py同级目录下 创建 celery.py配置文件
 
 文件内容如下：
 
@@ -1317,18 +1400,20 @@ from celery import Celery
 from django.conf import settings
 import os
 
-# 为celery设置环境变量
+# 为celery设置环境变量 setdefault('DJANGO_SETTINGS_MODULE', '项目名.settings')
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'test_celery.settings')
 
 # 创建应用
-app = Celery("test_celery")
+app = Celery("test_celery"broker=''redis://:@127.0.0.1:6379/1')
+# 设置app自动发现任务
+app.autodiscover_tasks(settings.INSTALLED_APPS)
+             
+----------------方式二 --------------------         
 # 配置应用
 app.conf.update(
     # 配置broker
     BROKER_URL='redis://:@127.0.0.1:6379/1',
 )
-# 设置app自动加载任务
-app.autodiscover_tasks(settings.INSTALLED_APPS)
 ```
 
 3,  在应用模块【user目录下】创建tasks.py文件
@@ -1366,4 +1451,9 @@ def test_celery(request):
 
 7,  创建 celery worker
 
-​	在项目路径下，即test_celery 下  执行如下
+​	在项目路径下，即test_celery 下  执行如下:
+
+```
+终端：celery -A taoshopt worker -l info
+```
+

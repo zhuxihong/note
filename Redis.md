@@ -64,11 +64,6 @@ redis-cli 进入后 ping一下确认连接上
 | keys *（表达式）   | 查看键（*通配符，慎用）                 |
 | del 键             | 删除键                                  |
 | type 键            | 数据类型键                              |
-| rename 键 新的健名 | 重命名                                  |
-| exist 键           | 键是否存在                              |
-| flushdb            | 清除当前库所有数据（慎用）              |
-| del 键             | 删除键                                  |
-| flushall           | 清除所有库的数据（慎用）                |
 | rename 键 新的健名 | 键重命名                                |
 | flushdb            | 清除当前库所有数据（慎用）              |
 | flushall           | 清除所有库的数据（慎用）                |
